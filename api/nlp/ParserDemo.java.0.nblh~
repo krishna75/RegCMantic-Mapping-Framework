@@ -1,0 +1,206 @@
+package api.nlp;
+
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.io.StringReader;
+
+import edu.stanford.nlp.objectbank.TokenizerFactory;
+import edu.stanford.nlp.process.CoreLabelTokenFactory;
+import edu.stanford.nlp.process.DocumentPreprocessor;
+import edu.stanford.nlp.process.PTBTokenizer;
+import edu.stanford.nlp.ling.CoreLabel;  
+import edu.stanford.nlp.ling.HasWord;  
+import edu.stanford.nlp.trees.*;
+import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
+import helper.util.Print;
+import java.util.Iterator;
+
+public class ParserDemo {
+    List<CoreLabel> tokenList;
+    List<TypedDependency> tdList;
+    int index;
+
+  public ParserDemo() {
+    LexicalizedParser lp = LexicalizedParser.loadModel("d:/NetBeansProjects/jar_library/"
+            + "stanford-parser-2012-03-09/stanford-parser-2012-03-09-models/"
+            + "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz");
+    demoAPI(lp);
+  }
+
+  public  void demoAPI(LexicalizedParser lp) {
+
+     String sent2 = "";
+     sent2 = "If the starting material is not released, the starting materials should be  signed, recorded , reported and returned to the sender.";
+     sent2 = "The washing, cleaning and toilet facilities in the company should be separate from, but easily accessible to, manufacturing areas";
+          sent2 = "Incoming materials and finished products should not  be mentally or administratively "+
+             "quarantined immediately after receipt or processing, until they have been released for use or distribution";
+//    sent2 = ("This is a slightly longer and more complex " +
+//                      "sentence requiring tokenization.");
+    /*  tokeniser to tree   */
+    TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
+    tokenList = tokenizerFactory.getTokenizer(new StringReader(sent2)).tokenize();
+    Tree parse = lp.apply(tokenList);
+
+    /*  tree to grammar   */
+    TreebankLanguagePack tlp = new PennTreebankLanguagePack();
+    GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
+    GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
+    
+    /*  grammar to dependency  */
+    tdList = gs.typedDependenciesCCprocessed();
+    getRoot();
+    
+//    getSubject();
+//    getAction();
+    getObligation();
+    
+//    Print.prln(" Root verb = "+getString(getRoot()));
+
+//    Print.prln(" Object = "+ getString(getObjectRoot()));
+//    while ( tdIter.hasNext()) {
+//        TypedDependency td = tdIter.next();
+//       
+////        Print.prln(" relation = " + td.reln().getLongName());
+////        Print.prln("index =" + td.dep().index()+" text ="+td.dep().nodeString());
+//        
+//        if(td.gov().nodeString().equals("ROOT")){
+//            action = td.dep().nodeString();
+//            Print.prln("action = " + action);     
+//        }
+//        Print.prln("acton = "+ td.gov().nodeString()+", rel = "+td.reln().toString());
+//        if (td.gov().nodeString().equals(action) && td.reln().toString().equals("conj_and")){
+//            Print.prln("action 2 = " + td.dep().nodeString());
+//        }
+//    }
+
+    TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
+    tp.printTree(parse);
+  }
+  
+  public int getRoot(){
+      int i = -1;
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+          TypedDependency td = tdIter.next();
+          if(td.gov().nodeString().equals("ROOT")){
+            i = td.dep().index();  
+          }
+      } 
+      index = i;
+      return i;
+  }
+  
+  public void getAction(){
+      String text = "";
+      ArrayList<String> actList = new ArrayList<String>();
+      int k2 = 0;
+      int k ;  
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+        TypedDependency td = tdIter.next();
+        if(  td.gov().index() == index ){
+            k = td.dep().index();  
+            if (k>k2 || k2 == 0){
+                k2=k;
+            }
+       }
+     }
+      for (int x = index; x<=k2; x++){
+          actList.add(getString(x));
+      }
+
+      Print.prlnArrayList(actList);
+  }
+  
+    public void getObligation(){
+      String text = "";
+      ArrayList<String> actList = new ArrayList<String>();
+      int k2 = 0;
+      int k ;  
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+        TypedDependency td = tdIter.next();
+        if(  td.reln().toString().contains("aux") &&
+            td.gov().index() == index ){
+            k = td.dep().index();  
+            if (k<k2 || k2 == 0){
+                k2=k;
+            }
+       }
+     }
+      if (k2>1){
+        for (int x = k2; x<index; x++){
+            actList.add(getString(x));
+        }
+      }
+
+      Print.prlnArrayList(actList);
+  }
+  
+  public String getSubject(){
+      String text = "";
+      ArrayList<String> subList = new ArrayList<String>();
+      int i = getDep("nsubj", index);
+      int k2 = 0;
+      int k ;  
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+        TypedDependency td = tdIter.next();
+        if(  td.gov().index() == i ){
+            k = td.dep().index();  
+            if (k<k2 || k2 == 0){
+            k2=k;
+        }
+      }
+     }
+      for (int x = k2; x<=i; x++){
+          subList.add(getString(x));
+      }
+      Print.prlnArrayList(subList);
+      
+      return text;
+  }
+  
+  
+  
+  
+
+
+  
+  public int getObjectRoot(){
+      int i = -1;
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+          TypedDependency td = tdIter.next();
+          //Print.prln(" reln = "+ td.reln().toString()+ " index = "+td.gov().index());
+          if(td.reln().toString().equals("dobj") && td.gov().index() == index ){
+            i = td.dep().index();  
+          }
+      }
+      return i ;
+  }
+  
+  
+  public int getDep(String rel, int gov){
+      int i = -1;
+      Iterator<TypedDependency> tdIter = tdList.iterator();
+      while (tdIter.hasNext()){
+        TypedDependency td = tdIter.next();
+        if(td.reln().toString().contains(rel) && td.gov().index() == gov ){
+            i = td.dep().index();  
+        }
+     }
+     return i;
+  }
+  
+  public String getString(int i){
+      String text = "";
+      if (i>0 && i< tokenList.size()){
+          text = tokenList.get(i-1).originalText();
+      }
+      return text;
+  }
+
+}

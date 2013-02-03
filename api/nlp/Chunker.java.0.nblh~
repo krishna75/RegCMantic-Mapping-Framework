@@ -1,0 +1,101 @@
+
+
+package api.nlp;
+
+import api.xml.XmlReader;
+import helper.util.Converter;
+import helper.util.MyReader;
+import helper.util.MyWriter;
+import helper.util.Print;
+import java.util.ArrayList;
+import java.util.List;
+import org.w3c.dom.Element;
+import rcm.main.Settings;
+
+/**
+ * Chunk = small file
+ * @author Krishna Sapkota,  May 17, 2012,  11:25:26 PM
+ * A PhD project at Oxford Brookes University
+ */
+public class Chunker {
+    // local files
+    AbstractSentenceReader reader = new RefinedSentenceReader();
+    StanfordParser parser = new StanfordParser();
+    SentenceWrapper wrapper = new SentenceWrapper();
+    XmlReader xml = new XmlReader();
+    
+    /*  file names */
+    String SENTENCE_CHUNK = Settings.PARSER_PATH + "sentence_chunk_";
+    String WRAPPER_CHUNK = Settings.PARSER_PATH + "wrapper_chunk_";
+    String SEN_INDEX_FILE = Settings.PARSER_PATH + "sen_index.txt";
+    String WRAPPER_INDEX_FILE = Settings.PARSER_PATH + "wrapper_index.txt";
+    
+    /*  list of sentences and parsed (wrapped) sentences */
+    ArrayList<String> senChunkList = new ArrayList<String>();
+    ArrayList<String> wrapperChunkList = new ArrayList<String>();
+
+    // variables
+    int CHUNK_SIZE = 50 ;
+    
+    public Chunker() {
+//       chunkSentence();
+       readChunkedSentence();
+    }
+    
+ /**
+     *  Chunk = small file
+     *  it divides a big file in to several small files of sentences.
+     */
+    public void chunkSentence(){
+        
+        ArrayList<String> senList =  reader.getSenTextList();
+        int n = 1 + senList.size()/CHUNK_SIZE;
+        Print.prln(" n= "+ n);
+        for (int i = 0; i<n ; i++){
+           int start = CHUNK_SIZE * i;
+           int end ;
+           if (i<n-1){
+               end = CHUNK_SIZE * i+ CHUNK_SIZE;
+           }else {
+               end = senList.size()-1;
+           }
+           List<String> subList =  senList.subList( start, end);
+           ArrayList<String> chunkList = Converter.listToArrayList(subList);
+           String filename = SENTENCE_CHUNK + (i+1)+".xml";
+           senChunkList.add(filename);
+           reader.writeFile(chunkList, filename);  
+        }
+        MyWriter.write(senChunkList, SEN_INDEX_FILE);
+    }
+    
+    public void readChunkedSentence(){
+        ArrayList<String> fileList = MyReader.fileToArrayList(SEN_INDEX_FILE);
+        int count = 1;
+        for (String file: fileList){
+            
+            // just process first file
+            if (fileList.indexOf(file)>0){
+                break;
+            }
+            String filename = WRAPPER_CHUNK + (count++) +".xml";
+            wrapperChunkList.add(filename);
+            ArrayList<String> senList = new ArrayList<String>();           
+            ArrayList<Element> senElementList =  xml.getXmlDomElements(file, "sentence");
+            for (Element sen: senElementList){
+                String senText = sen.getTextContent();
+                senList.add(senText);
+            }
+            
+            // get parsed list
+            ArrayList<SentenceWrapper> wpList = parser.processSentenceList(senList);
+            
+            // write the wp list
+            wrapper = new SentenceWrapper();
+            wrapper.setWrapperList(wpList); 
+            wrapper.write(filename);  
+        }
+         MyWriter.write(wrapperChunkList, WRAPPER_INDEX_FILE);
+    }
+    
+
+}

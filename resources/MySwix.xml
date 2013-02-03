@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RcmFrame size="1200,700"  defaultCloseOperation="JFrame.EXIT_ON_CLOSE">
+    <!--  NORTH: The title panel           -->
+    <panel preferredSize="800,75" constraints="BorderLayout.NORTH" background="darkGray" >
+        <label font="Georgia-BOLD-36" foreground="white" text="Mapping Details"/>
+    </panel>
+
+    <!--  WEST: Regulation panel        -->
+    <panel constraints="BorderLayout.WEST" alignmentY="5">
+        <panel  preferredSize="250,300" constraints="BoxLayout.Y_AXIS">
+            <label text="Regulation " font="Georgia-BOLD-25"  foreground="gray"/>
+            <label text="id:" font="Georgia-BOLD-18"  foreground="gray"/>
+            <label id="lblRegId" font="Georgia-BOLD-18"  />
+            <label text="subject:" font="Georgia-BOLD-18"  foreground="gray"/>
+            <label id="lblRegSubject" font="Georgia-BOLD-18"  />
+            <label text="action:" font="Georgia-BOLD-18"  foreground="gray"/>
+            <label id="lblRegAction" font="Georgia-BOLD-18"  />
+        </panel>
+    </panel>
+
+    <!--   CENTER: Mapping score panel         -->
+    <panel constraints="BorderLayout.CENTER" >
+        <panel preferredSize="250,300" >
+            <label  font="Georgia-BOLD-25" text="Similarity Score" foreground="gray"  />
+            <progressbar id="scoreBar" preferredSize="200,40" foreground="blue" background="white" stringPainted="true" />
+        </panel>
+    </panel>
+
+    <!--   EAST: Validation task panel         -->
+    <panel constraints="BorderLayout.EAST">
+        <label font="Georgia-BOLD-25" text="Validation Task" foreground="gray" />
+    </panel >
+
+    <!--   SOUTH: Buttom pannel         -->
+    <panel constraints="BorderLayout.SOUTH">
+        <label font="Georgia-BOLD-18" text="Original Regulation"/>
+        <label id="lblSouth1"/>
+    </panel>
+</RcmFrame>
